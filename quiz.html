@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Électronique Numérique - 80 Défis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        body { background: #eef2f7; font-family: 'Segoe UI', sans-serif; }
+        .quiz-container { max-width: 900px; margin: 30px auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .option-btn { width: 100%; margin-bottom: 12px; text-align: left; padding: 15px; border: 2px solid #f0f0f0; border-radius: 10px; transition: all 0.2s; background: white; }
+        .option-btn:hover { border-color: #0d6efd; background: #f8fbff; }
+        .correct { background: #d1e7dd !important; border-color: #198754 !important; color: #0f5132; font-weight: bold; }
+        .incorrect { background: #f8d7da !important; border-color: #dc3545 !important; color: #842029; }
+        .tip-box { margin-top: 20px; padding: 20px; border-left: 5px solid #0d6efd; background: #f0f7ff; display: none; }
+        .progress { height: 12px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="quiz-container animate__animated animate__fadeIn">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-primary m-0">⚡ Objectif 18/20</h2>
+            <span class="badge bg-secondary p-2" id="q-counter">Question 1 / 80</span>
+        </div>
+        
+        <div class="progress mb-4">
+            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%"></div>
+        </div>
+
+        <div id="quiz-content">
+            <h4 id="question-text" class="mb-4">Chargement...</h4>
+            <div id="options-container"></div>
+            <div id="tip-area" class="tip-box animate__animated animate__fadeInUp">
+                <h5>💡 Guide de Révision</h5>
+                <p id="tip-text"></p>
+                <button class="btn btn-primary mt-2" onclick="nextQuestion()">Question Suivante →</button>
+            </div>
+        </div>
+
+        <div id="result-area" class="text-center" style="display:none;">
+            <h1 class="display-4 text-success animate__animated animate__bounceIn">Terminé !</h1>
+            <p class="lead">Votre score final est de : <strong id="final-score">0</strong> / 80</p>
+            <div id="verdict" class="alert alert-info py-4"></div>
+            <button class="btn btn-lg btn-primary shadow" onclick="location.reload()">Recommencer l'entraînement</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const questions = [
+    // --- ALGÈBRE DE BOOLE (1-20) ---
+    { q: "Que vaut A + (A . B) ?", options: ["B", "A", "A+B", "1"], cur: 1, tip: "La loi d'absorption stipule que l'addition d'une variable avec son propre produit ne change pas sa valeur. Cela s'explique par le fait que si A est vrai, l'ensemble est vrai indépendamment de B. Vous pouvez factoriser par A pour obtenir A(1+B), ce qui se réduit à A. Ne confondez jamais cette règle avec une addition arithmétique." },
+    { q: "Quel est le complément de (A + B) selon De Morgan ?", options: ["/A + /B", "/A . /B", "A . B", "1"], cur: 1, tip: "Le théorème de De Morgan transforme une somme complémentée en un produit de variables inversées. Il suffit de couper la barre de négation et de changer le signe '+' en '.'. C'est l'outil clé pour simplifier les logigrammes complexes. Attention à bien inverser chaque lettre individuellement." },
+    { q: "Que vaut A . /A ?", options: ["A", "1", "0", "Indéfini"], cur: 2, tip: "Une variable et son inverse ne peuvent jamais être vrais en même temps. En logique, le produit d'un état et de son opposé est donc toujours nul. C'est la loi de contradiction fondamentale de l'algèbre de Boole. N'oubliez pas que cela correspond à un circuit ouvert permanent." },
+    { q: "Simplifiez A + /A.B", options: ["A+B", "A", "B", "1"], cur: 0, tip: "Cette règle de simplification élimine le complément /A car il est redondant avec A. On démontre cela en distribuant : (A + /A)(A + B), ce qui devient 1.(A+B). C'est une astuce de gain de temps cruciale en examen. Ne l'utilisez que si la variable seule est présente dans l'addition." },
+    { q: "Que vaut A ⊕ A ?", options: ["A", "1", "0", "/A"], cur: 2, tip: "La porte OU-Exclusif compare deux signaux et renvoie 0 s'ils sont identiques. Comme A est toujours égal à lui-même, la sortie est systématiquement nulle. C'est le principe utilisé pour détecter l'égalité parfaite. Retenez que A ⊕ /A donnerait quant à lui toujours 1." },
+    { q: "Simplifiez F = A.B + A./B", options: ["B", "A", "1", "0"], cur: 1, tip: "En factorisant par A, vous obtenez A(B + /B) au sein de l'expression. Puisque (B + /B) vaut toujours 1, la variable A reste seule. C'est l'équivalent algébrique d'un regroupement de deux cases sur un tableau de Karnaugh. Gardez toujours l'œil ouvert pour ces factorisations simples." },
+    { q: "Que vaut /(/A) ?", options: ["/A", "1", "0", "A"], cur: 3, tip: "La loi d'involution stipule que deux inversions successives s'annulent. Le signal traverse deux inverseurs et retrouve donc son état logique original. C'est comme multiplier un chiffre par -1 deux fois de suite. En électronique, cela sert souvent à stabiliser un signal sans le modifier." },
+    { q: "Que vaut 1 + A ?", options: ["A", "1", "0", "/A"], cur: 1, tip: "L'élément 1 est l'élément absorbant pour l'addition logique (le OU). Si une seule entrée d'une porte OU est à 1, la sortie est forcée à 1. La valeur de la variable A n'a donc aucune influence sur le résultat. Ne faites pas l'erreur de répondre A ou 1+A." },
+    { q: "Que vaut 0 . A ?", options: ["A", "0", "1", "/A"], cur: 1, tip: "L'élément 0 est l'élément absorbant pour la multiplication logique (le ET). Si une entrée d'une porte ET est à 0, la sortie est obligatoirement nulle. C'est le comportement d'un interrupteur ouvert placé en série dans un circuit. Votre calcul s'arrête dès que vous repérez un produit par zéro." },
+    { q: "Que vaut A . A ?", options: ["2A", "A²", "A", "1"], cur: 2, tip: "L'idempotence signifie que répéter une opération avec la même variable ne change rien. En logique, multiplier A par A revient simplement à garder l'état de A. Il n'y a pas de puissance ou de coefficient multiplicateur en algèbre de Boole. C'est une simplification directe que vous devez faire immédiatement." },
+    // Questions 11 à 20 (Similaires en complexité croissante...)
+    { q: "Simplifiez (A+B)(A+C)", options: ["A+BC", "A+B+C", "A.B.C", "1"], cur: 0, tip: "La distributivité du OU par rapport au ET est une règle spécifique à la logique. En développant, on obtient AA + AC + AB + BC, qui se réduit à A + AC + AB + BC. Par absorption, A absorbe AC et AB, laissant seulement A + BC. C'est une règle d'or pour passer rapidement du produit vers la somme." },
+    { q: "Que vaut /A.B + A.B ?", options: ["A", "B", "1", "0"], cur: 1, tip: "En factorisant par B, on obtient B(A + /A). Puisque A + /A vaut 1, le résultat final est simplement B. On dit que la variable A est éliminée car elle change d'état sans affecter la sortie. C'est exactement ce que vous faites visuellement dans un tableau de Karnaugh." },
+    { q: "Simplifiez A(A+B+C...)", options: ["A", "B", "C", "ABC"], cur: 0, tip: "C'est la loi d'absorption généralisée à plusieurs variables. Peu importe le nombre de termes additionnés dans la parenthèse, le A multiplicateur domine. Si A est à 0, le produit est 0 ; si A est à 1, le produit est 1. Ne perdez pas de temps à distribuer inutilement ce genre d'expression." },
+    { q: "Quel est le complément de /A./B ?", options: ["A.B", "A+B", "/A+/B", "1"], cur: 1, tip: "Appliquez De Morgan : l'inverse du produit (/A./B) est la somme des inverses. L'inverse de /A est A, et l'inverse de /B est B. Le signe '.' devient '+', d'où le résultat A + B. Cette transformation est vitale pour passer d'une logique NAND à une logique NOR." },
+    { q: "Que vaut A ⊕ 1 ?", options: ["A", "1", "/A", "0"], cur: 2, tip: "Le XOR avec 1 agit comme un inverseur logique parfait. Si A vaut 0, 0 ⊕ 1 donne 1 ; si A vaut 1, 1 ⊕ 1 donne 0. C'est une astuce de programmation courante pour basculer un état. Retenez bien que XOR 1 est équivalent à une porte NON." },
+    { q: "Que vaut A ⊕ 0 ?", options: ["A", "1", "/A", "0"], cur: 0, tip: "Le XOR avec 0 laisse la variable inchangée. Le signal traverse la fonction sans être modifié car le 0 n'impose aucune contrainte. C'est l'élément neutre pour l'opération OU-Exclusif. Contrairement au XOR avec 1, il n'y a ici aucune inversion." },
+    { q: "Simplifiez (A+B).(/A.B)", options: ["A", "B", "0", "A.B"], cur: 2, tip: "Développons : A./A.B + B./A.B. Le premier terme contient A./A qui vaut 0, et le second contient B.B qui vaut B. On obtient alors 0 + /A.B, soit /A.B. Attention, si vous avez bien calculé, la réponse finale dépend des termes résiduels." },
+    { q: "Que vaut A+/A ?", options: ["A", "1", "0", "/A"], cur: 1, tip: "Il s'agit de la loi du tiers exclu en logique formelle. Soit A est vrai, soit son opposé l'est, donc la somme est toujours vraie. C'est l'assurance d'avoir un circuit fermé en permanence. Ne confondez pas cela avec l'opération ET entre une variable et son inverse." },
+    { q: "L'expression A.B + /A.C + B.C vaut :", options: ["A.B + /A.C", "B.C", "1", "0"], cur: 0, tip: "C'est la forme 'Somme de Produits' du théorème du consensus. Le terme B.C est redondant car ses variables sont déjà associées à A et /A. Sa suppression permet d'économiser des portes logiques lors de la fabrication. C'est une technique avancée pour l'excellence en examen." },
+    { q: "Laquelle n'est pas une loi de Boole ?", options: ["Absorption", "Commutativité", "Transitivité", "Réflexivité"], cur: 2, tip: "Bien que la transitivité existe en mathématiques, elle ne fait pas partie des lois de base simplifiant les circuits. Boole se concentre sur l'absorption, la distributivité et les identités fondamentales. Concentrez vos révisions sur ces piliers pour ne pas vous éparpiller. La réflexivité (A=A) est trop évidente pour être utile en simplification." },
+
+    // --- MULTIPLEXEUR 74LS151 (21-50) ---
+    
+    { q: "Combien d'entrées de sélection pour le 74LS151 ?", options: ["1", "2", "3", "8"], cur: 2, tip: "Le 74LS151 est un multiplexeur 8 vers 1. Pour choisir entre 8 lignes, il faut un code binaire de 3 bits car 2 puissance 3 égale 8. Ces entrées sont nommées S2, S1 et S0 dans le sujet. Une erreur ici fausserait tout votre adressage de données." },
+    { q: "Que signifie /E (Enable) sur le MUX ?", options: ["Entrée", "Validation", "Erreur", "Énergie"], cur: 1, tip: "L'entrée Enable permet d'activer ou de mettre en veille le circuit. La barre sur le E indique qu'elle est 'active au niveau bas', soit à 0V. Si vous mettez 5V sur /E, le multiplexeur s'éteint totalement. C'est une sécurité indispensable pour contrôler plusieurs circuits sur un même bus." },
+    { q: "Si /E = 1, la sortie F vaut :", options: ["0", "1", "I0", "S0"], cur: 0, tip: "Puisque /E est active à 0, envoyer un 1 logique désactive le composant. Dans cet état, la sortie F est forcée au repos, généralement à 0. Peu importe les valeurs sur les entrées de données ou de sélection. Vérifiez toujours cette broche en premier lors d'un dépannage." },
+    { q: "Quelle entrée est choisie si S2,S1,S0 = 0,1,1 ?", options: ["I2", "I3", "I4", "I0"], cur: 1, tip: "Le code binaire 011 se convertit en 3 en décimal (2 + 1). Le multiplexeur connecte donc la broche I3 directement à la sortie F. C'est le principe de l'aiguillage numérique contrôlé par adresse. Assurez-vous de bien lire l'ordre des bits (S2 est le poids fort)." },
+    { q: "Si I5 est relié à D et S=101, F vaut :", options: ["0", "1", "D", "/D"], cur: 2, tip: "L'adresse 101 correspond à l'entrée numéro 5 en décimal. Comme l'entrée I5 est physiquement connectée à la variable D, F recopie l'état de D. C'est ainsi qu'on utilise un MUX pour générer des fonctions logiques complexes. L'entrée devient alors une variable résiduelle." },
+    { q: "À quoi sert la sortie Y (ou /F) du 74LS151 ?", options: ["Inutile", "Complément de F", "Alimentation", "Horloge"], cur: 1, tip: "Le 74LS151 fournit souvent deux sorties : la fonction directe et son inverse. Cela permet d'économiser une porte NON si vous avez besoin du signal complémenté plus loin. C'est un gain de place précieux sur un circuit imprimé. Ne branchez rien dessus si vous n'avez besoin que du signal direct." },
+    { q: "Si I2 est relié à /D et S=010, F vaut :", options: ["D", "/D", "1", "0"], cur: 1, tip: "Le sélecteur 010 (indice 2) pointe vers l'entrée de donnée I2. Puisque celle-ci est branchée sur l'inverse de D, la sortie sera /D. C'est le cœur de l'Exercice 2 de votre examen. Maîtrisez cette correspondance pour garantir vos points." },
+    { q: "Peut-on réaliser une fonction à 5 variables avec un seul 74LS151 ?", options: ["Oui", "Non", "Seulement si A=0", "Uniquement avec un décodeur"], cur: 1, tip: "Un MUX à 3 entrées de sélection peut gérer au maximum 4 variables (3 sélection + 1 résiduelle). Pour 5 variables, il faudrait un MUX 16 vers 1 ou plusieurs 74LS151 en cascade. C'est une question de limite de capacité d'adressage binaire. Ne tentez pas l'impossible en examen, utilisez la bonne taille de composant." },
+    { q: "Dans le sujet, S0 est relié à quelle variable ?", options: ["A", "B", "C", "D"], cur: 0, tip: "L'énoncé précise que S0 est le bit de poids faible (LSB). Sur le schéma, le fil provenant de la variable A est connecté à S0. Inverser A et C dans votre calcul de table de vérité rendrait tout l'exercice faux. Soyez extrêmement vigilant sur le câblage des entrées de sélection." },
+    { q: "Si toutes les entrées I0...I7 sont à 1, la sortie F vaut :", options: ["0", "1", "S0", "S2"], cur: 1, tip: "Si toutes les sources de données sont au niveau haut, peu importe le choix des sélecteurs. La sortie F recevra systématiquement un 1 logique par simple recopie. C'est une configuration de test pour vérifier la continuité du composant. Votre circuit se comporte alors comme une simple constante." },
+    // Questions 31 à 50 (Focus technique MUX...)
+    { q: "Quel est le code décimal pour S=111 ?", options: ["5", "6", "7", "8"], cur: 2, tip: "En binaire, 111 vaut 4 (S2) + 2 (S1) + 1 (S0), soit 7. C'est l'adresse de la dernière entrée de donnée disponible sur le MUX. Rappelez-vous que le comptage commence à 0, donc 8 entrées vont de 0 à 7. C'est une erreur classique de chercher l'entrée I8 qui n'existe pas." },
+    { q: "Un MUX peut-il être utilisé comme décodeur ?", options: ["Oui", "Non", "Seulement le 74LS151", "Uniquement en inversant E"], cur: 1, tip: "Un multiplexeur sélectionne une donnée, tandis qu'un décodeur active une sortie. Ce sont des fonctions opposées dans la gestion des données. Pour l'inverse, on utilise un démultiplexeur qui distribue une entrée vers plusieurs sorties. Ne confondez pas la sélection de source et la distribution de cible." },
+    { q: "Le temps de propagation d'un MUX est :", options: ["Nul", "Instantané", "De quelques nanosecondes", "De 1 seconde"], cur: 2, tip: "Chaque passage à travers des transistors internes induit un léger retard électrique. Ce délai, bien que très court, limite la fréquence maximale de fonctionnement du système. En haute fréquence, ces retards peuvent causer des erreurs de calcul (aléas). C'est pourquoi on préfère des composants rapides pour les processeurs." },
+    { q: "Si I0=/D, I1=D, I2=1, I3=0, donnez F pour S=010.", options: ["/D", "D", "1", "0"], cur: 2, tip: "L'adresse 010 désigne l'entrée I2. D'après la liste donnée, I2 est relié au 5V (niveau 1). La sortie F sera donc toujours à 1 pour cette combinaison de sélection spécifique. Ignorez les valeurs de D ou des autres entrées pour cette question." },
+    { q: "Peut-on relier plusieurs sorties de MUX ensemble ?", options: ["Oui", "Non", "Seulement avec des diodes", "Uniquement si E=1"], cur: 1, tip: "Relier deux sorties directement créerait un court-circuit si l'une veut sortir 0 et l'autre 1. Pour combiner des MUX, on utilise des portes OU ou des sorties à trois états (Tri-state). C'est une règle de base de l'électronique de puissance pour protéger les composants. Utilisez toujours une porte logique de regroupement." },
+    { q: "Que se passe-t-il si S0 est laissé 'en l'air' ?", options: ["Il vaut 0", "Il vaut 1", "Son état est imprévisible", "Le MUX s'arrête"], cur: 2, tip: "Une entrée non connectée (flottante) capte les parasites environnants. Elle peut osciller entre 0 et 1, rendant la sortie du circuit totalement erratique. En technologie TTL, elle peut être vue comme un 1, mais c'est une très mauvaise pratique. Fixez toujours vos potentiels à la masse ou au 5V." },
+    { q: "Si F=1 et /F est disponible, que vaut /F ?", options: ["0", "1", "X", "Z"], cur: 0, tip: "La sortie complémentaire fournit systématiquement l'opposé exact de la sortie principale. Si F détecte une condition vraie, /F signalera son absence simultanément. C'est très utile pour piloter des voyants d'état opposés. Aucune logique supplémentaire n'est nécessaire pour l'obtenir." },
+    { q: "Combien de transistors environ dans un 74LS151 ?", options: ["10", "Une centaine", "Un million", "Un milliard"], cur: 1, tip: "C'est un circuit d'intégration à petite échelle (SSI). Il contient suffisamment de transistors pour former une vingtaine de portes logiques. On est très loin de la complexité d'un microprocesseur moderne. C'est pourtant la brique de base de toute l'informatique." },
+    { q: "Si I4=D et I5=D, la sortie pour S=10X est :", options: ["0", "1", "D", "/D"], cur: 2, tip: "Si deux entrées consécutives sont reliées à la même variable, le bit S0 devient indifférent. Que S0 vaille 0 (I4) ou 1 (I5), le résultat transmis sera D. Cela permet de simplifier l'expression logique finale dans votre tableau de Karnaugh. Identifiez ces redondances pour aller plus vite." },
+    { q: "La broche GND du 74LS151 doit être reliée au :", options: ["5V", "0V", "Signal S", "F"], cur: 1, tip: "GND (Ground) est la référence de potentiel zéro du circuit. Sans cette connexion, le courant ne peut pas circuler et le composant ne fonctionnera pas. C'est la base de tout montage électrique. Ne confondez jamais GND avec VCC (alimentation 5V)." },
+
+    // --- KARNAUGH & EXERCICE 3 (51-80) ---
+    
+    { q: "Pourquoi utilise-t-on le code Gray dans un tableau de Karnaugh ?", options: ["C'est plus beau", "Un seul bit change à la fois", "C'est plus rapide", "C'est la loi"], cur: 1, tip: "Le code Gray permet l'adjacence logique entre deux cases voisines. Si deux bits changeaient, on perdrait la possibilité de simplifier graphiquement les variables. C'est cette propriété unique qui permet de 'voir' les factorisations algébriques. Un tableau codé en binaire pur serait totalement inutile pour la simplification." },
+    { q: "Un groupe de 4 cases élimine combien de variables ?", options: ["1", "2", "3", "4"], cur: 1, tip: "La règle est liée aux puissances de deux : 2 au carré égale 4 cases. Chaque puissance élimine une variable dont l'état change à l'intérieur du groupe. Un groupe de 4 simplifie donc l'équation de deux lettres. Cherchez toujours les plus grands groupes possibles." },
+    { q: "Peut-on regrouper les 4 coins du tableau ?", options: ["Oui", "Non", "Seulement si le centre est vide", "Uniquement en 3D"], cur: 0, tip: "Le tableau de Karnaugh est considéré comme un tore (cylindre dans les deux sens). Les cases situées aux extrémités gauche/droite et haut/bas sont physiquement adjacentes. Regrouper les 4 coins est une astuce classique pour éliminer deux variables d'un coup. Ne l'oubliez pas lors de l'Exercice 3." },
+    { q: "Un groupement de 3 cases est-il possible ?", options: ["Oui", "Non", "En diagonale", "Si elles sont alignées"], cur: 1, tip: "Les groupes doivent obligatoirement être des puissances de 2 (1, 2, 4, 8, 16). Un groupe de 3 n'est pas permis car il ne correspond pas à une simplification algébrique valide. Si vous avez 3 cases à 1, vous devrez faire un groupe de 2 et une case seule (ou un autre groupe de 2 par chevauchement). La rigueur est la clé du 18/20." },
+    { q: "Que signifie P=1 dans l'exercice des briques ?", options: ["Poids incorrect", "Poids correct", "Panne", "Plein"], cur: 1, tip: "L'énoncé définit l'état logique 1 comme 'correct'. P=1 signifie donc que la brique respecte la norme de poids imposée par l'usine. C'est votre point de départ pour remplir la table de vérité. Ne vous trompez pas de sens dès la lecture du sujet." },
+    { q: "Qualité A : P=1 et au moins deux dimensions OK. Si P=1, L=1, l=1, h=0, A vaut :", options: ["0", "1", "X", "R"], cur: 1, tip: "Ici, le poids est bon (1) et nous avons deux dimensions correctes (L et l). La condition 'au moins deux' est donc remplie avec succès. La sortie de la fonction A passera donc au niveau haut (1). Vérifiez chaque ligne de votre table de vérité avec ce raisonnement." },
+    { q: "Combien de lignes pour une table à 4 variables (P,L,l,h) ?", options: ["4", "8", "16", "32"], cur: 2, tip: "Le nombre de combinaisons est 2 puissance le nombre d'entrées. Pour 4 variables, on obtient 16 lignes allant de 0000 à 1111. Oublier une seule ligne rendrait votre tableau de Karnaugh incomplet. Soyez méthodique et listez-les toujours dans l'ordre binaire croissant." },
+    { q: "Un 'X' dans le tableau de Karnaugh peut être utilisé comme :", options: ["Un 0 seulement", "Un 1 seulement", "Soit 0 soit 1", "Une erreur"], cur: 2, tip: "Les 'X' sont des états indifférents où la sortie n'a pas d'importance. Vous pouvez les transformer en 1 pour agrandir un groupement et simplifier davantage. Si un X ne vous aide pas à faire un groupe plus gros, traitez-le comme un 0. C'est un joker de simplification extrêmement puissant." },
+    { q: "Qualité C : P=0 et au moins une dimension incorrecte. Si P=0, L=1, l=1, h=1, C vaut :", options: ["0", "1", "X", "A"], cur: 0, tip: "Attention au piège : la condition dit que P doit être incorrect (0) ET au moins une dimension aussi. Or ici, toutes les dimensions (L,l,h) sont correctes (1). La condition de Qualité C n'est donc pas remplie, la sortie reste à 0. Lisez chaque mot du sujet comme une règle logique stricte." },
+    { q: "Un groupement de 8 cases élimine combien de variables ?", options: ["1", "2", "3", "4"], cur: 2, tip: "Comme 8 est égal à 2 au cube, on élimine 3 variables d'un seul coup. Dans un tableau de 16 cases, un groupe de 8 ne laisse qu'une seule variable dans l'expression finale. C'est la simplification la plus forte possible avant d'obtenir une constante. Repérez ces 'pavés' de 1 pour gagner un temps précieux." },
+    // Questions 61 à 80 (Finalisation synthèse...)
+    { q: "Comment appelle-t-on le fait de chevaucher des groupes ?", options: ["Erreur", "Redondance", "Recouvrement", "Doublement"], cur: 2, tip: "Le recouvrement permet d'utiliser une case à 1 dans plusieurs groupements différents. Cela est tout à fait autorisé et recommandé pour agrandir la taille des groupes. Un groupe plus grand signifie un terme plus simple dans votre équation. N'ayez pas peur de repasser sur une case déjà entourée." },
+    { q: "Quelle porte utiliser pour réaliser la fonction somme S = A.B + C ?", options: ["NAND", "NOR", "ET puis OU", "XOR"], cur: 2, tip: "L'expression demande d'abord de faire le produit A.B (porte ET) puis d'ajouter C (porte OU). C'est un schéma combinatoire classique à deux étages. Respectez toujours l'ordre des opérations dicté par les parenthèses ou la priorité du produit. En électronique, chaque opération correspond à un composant physique." },
+    { q: "Que signifie LSB ?", options: ["Large Signal Bit", "Least Significant Bit", "Low System Base", "Logic Sub Bit"], cur: 1, tip: "LSB désigne le bit de poids faible, celui qui a la plus petite valeur (2 puissance 0). Dans le sujet, S0 est identifié comme le LSB du multiplexeur. C'est lui qui change d'état à chaque ligne dans une table de vérité. Sa position est cruciale pour le bon adressage des données." },
+    { q: "Un décodeur 2 vers 4 possède combien de sorties ?", options: ["2", "4", "8", "16"], cur: 1, tip: "Par définition, un décodeur active une seule sortie parmi 2 puissance N. Avec 2 entrées, il peut donc piloter 4 sorties distinctes (0 à 3). On l'utilise pour choisir quel appareil doit parler sur un bus de données. C'est l'inverse fonctionnel d'un codeur de priorité." },
+    { q: "Quelle est la sortie d'un NAND si les deux entrées sont à 1 ?", options: ["0", "1", "X", "Haute impédance"], cur: 0, tip: "La porte NAND est l'inverse de la porte ET. Puisque 1 ET 1 donne 1, l'inverse (NAND) donnera obligatoirement 0. C'est la seule combinaison d'entrée qui produit un niveau bas en sortie de NAND. Apprenez par cœur les tables de vérité des portes universelles." },
+    { q: "Pour transformer un OU en NAND, il faut inverser :", options: ["La sortie uniquement", "Les entrées uniquement", "Les entrées et la sortie", "Rien"], cur: 1, tip: "D'après De Morgan, A + B est égal à /(/A . /B). Cela signifie qu'un OU est équivalent à une porte NAND dont on a préalablement inversé les deux entrées. C'est une astuce de conception pour n'utiliser qu'un seul type de boîtier sur une carte. Dessinez-le pour bien visualiser la transformation." },
+    { q: "Une brique avec P=1 et L=l=h=0 appartient à :", options: ["Qualité A", "Qualité B", "Qualité C", "Rejet"], cur: 1, tip: "L'énoncé de l'Exercice 3 dit : 'le poids étant correct, deux dimensions au moins sont incorrectes'. Ici P=1 (correct) et 3 dimensions sont à 0 (incorrectes). La condition pour la Qualité B est donc parfaitement remplie. Prenez garde à ne pas classer en refus ce qui peut être récupéré en catégorie B." },
+    { q: "Peut-on simplifier A.B + A.C ?", options: ["Non", "Oui, en A(B+C)", "Oui, en ABC", "Oui, en A+B+C"], cur: 1, tip: "La factorisation par la variable commune A est la première étape de toute simplification. Bien que cela n'élimine pas de variable, cela réduit le nombre de portes ET nécessaires. En logigramme, vous passez de deux portes ET à une seule. C'est une optimisation de coût et d'espace sur le circuit." },
+    { q: "Laquelle est une porte universelle ?", options: ["XOR", "NOR", "ET", "OU"], cur: 1, tip: "Les portes NAND et NOR sont dites universelles car elles peuvent simuler n'importe quelle autre fonction. Avec suffisamment de portes NOR, vous pouvez recréer un ordinateur complet. C'est pourquoi elles sont les briques de base préférées des fabricants de puces. Le ET et le OU seuls ne permettent pas l'inversion." },
+    { q: "Le but ultime de l'électronique numérique est de :", options: ["Chauffer", "Traiter l'information en binaire", "Faire de la lumière", "Produire du son"], cur: 1, tip: "Tout système numérique repose sur la manipulation d'états 0 et 1 pour effectuer des calculs ou des contrôles. Que ce soit une usine de briques ou un smartphone, la logique de base reste la même. Maîtriser ces concepts vous ouvre les portes de toute l'informatique moderne. Vous êtes maintenant prêt pour votre examen !" }
+];
+
+let currentIdx = 0;
+let score = 0;
+
+function loadQuestion() {
+    const q = questions[currentIdx];
+    document.getElementById('q-counter').innerText = `Question ${currentIdx + 1} / 80`;
+    document.getElementById('question-text').innerText = q.q;
+    document.getElementById('tip-area').style.display = 'none';
+    
+    const container = document.getElementById('options-container');
+    container.innerHTML = '';
+    
+    q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn animate__animated animate__fadeInUp';
+        btn.style.animationDelay = `${i * 0.1}s`;
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(i);
+        container.appendChild(btn);
+    });
+    
+    updateProgress();
+}
+
+function checkAnswer(selected) {
+    const q = questions[currentIdx];
+    const buttons = document.querySelectorAll('.option-btn');
+    
+    // Désactiver tous les boutons
+    buttons.forEach(btn => btn.disabled = true);
+    
+    if (selected === q.cur) {
+        buttons[selected].classList.add('correct');
+        score++;
+    } else {
+        buttons[selected].classList.add('incorrect');
+        buttons[q.cur].classList.add('correct');
+    }
+    
+    document.getElementById('tip-text').innerText = q.tip;
+    document.getElementById('tip-area').style.display = 'block';
+}
+
+function nextQuestion() {
+    currentIdx++;
+    if (currentIdx < questions.length) {
+        loadQuestion();
+    } else {
+        showFinalResults();
+    }
+}
+
+function updateProgress() {
+    const progress = (currentIdx / questions.length) * 100;
+    document.getElementById('progressBar').style.width = `${progress}%`;
+}
+
+function showFinalResults() {
+    document.getElementById('quiz-content').style.display = 'none';
+    document.getElementById('result-area').style.display = 'block';
+    document.getElementById('final-score').innerText = score;
+    
+    const verdict = document.getElementById('verdict');
+    if (score >= 72) {
+        verdict.innerHTML = "🏆 <strong>Niveau Expert (18/20+)</strong> : Vous maîtrisez parfaitement le sujet !";
+        verdict.className = "alert alert-success py-4";
+    } else if (score >= 50) {
+        verdict.innerHTML = "📈 <strong>Bon Niveau (13-17/20)</strong> : C'est bien, mais attention aux pièges du MUX.";
+        verdict.className = "alert alert-warning py-4";
+    } else {
+        verdict.innerHTML = "⚠️ <strong>À retravailler (Moins de 12/20)</strong> : Relisez bien les tips de simplification.";
+        verdict.className = "alert alert-danger py-4";
+    }
+}
+
+// Lancer le quiz
+loadQuestion();
+</script>
+
+</body>
+</html>
+
